@@ -11,6 +11,7 @@ import {
   LogOut,
   X,
   Save,
+  Hammer,
 } from "lucide-react";
 import type { Difficulty } from "../shared/types";
 import { isTerminal } from "../shared/initial";
@@ -24,12 +25,17 @@ import { ActionBar, ProgressStrip } from "../features/exploration";
 import { analyze, InferencePanel } from "../features/inference";
 import { ToolPanel } from "../features/tools";
 import { ChroniclePanel, ResultPanel } from "../features/chronicle";
+import { WorkshopView } from "../features/workshop";
 import { useGame } from "./useGame";
 import { GuideDialog } from "./ui/GuideDialog";
 import { LaunchDialog } from "./ui/LaunchDialog";
+
+type View = "expedition" | "workshop";
+
 export function App() {
   const { state, send, saved } = useGame();
   const e = state.doc.expedition;
+  const [view, setView] = useState<View>("expedition");
   const [help, setHelp] = useState(false);
   const [launch, setLaunch] = useState<Difficulty | null>(null);
   const [extract, setExtract] = useState(false);
@@ -37,6 +43,51 @@ export function App() {
   const analysis = useMemo(() => analyze(publicBoard(e.board)), [e.board]);
   const r = region(e.board.difficulty);
   const report = state.doc.archive.reports.find((v) => v.id === e.id);
+
+  if (view === "workshop") {
+    return (
+      <div className="app-shell">
+        <header className="app-header">
+          <a className="brand" href="#">
+            <span className="brand-mark">
+              <Compass size={28} strokeWidth={1.2} />
+            </span>
+            <span>
+              <strong>
+                遗迹探勘<span>RUINFIELD</span>
+              </strong>
+              <small>在未知之中，寻找文明的回声。</small>
+            </span>
+          </a>
+          <nav aria-label="主导航">
+            <a href="#map" onClick={(ev) => { ev.preventDefault(); setView("expedition"); }}>
+              <Map size={14} />
+              遗迹探索
+            </a>
+            <a href="#workshop" className="nav-active" onClick={(ev) => ev.preventDefault()}>
+              <Hammer size={14} />
+              关卡台
+            </a>
+          </nav>
+          <div className="header-end">
+            <button
+              className="icon-button"
+              aria-label="探险指南"
+              onClick={() => setHelp(true)}
+            >
+              <HelpCircle size={18} />
+            </button>
+            <span className="avatar">筑</span>
+          </div>
+        </header>
+        <main>
+          <WorkshopView />
+        </main>
+        {help && <GuideDialog onClose={() => setHelp(false)} />}
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -55,6 +106,10 @@ export function App() {
           <a className="nav-active" href="#map">
             <Map size={14} />
             遗迹探索
+          </a>
+          <a href="#workshop" onClick={(ev) => { ev.preventDefault(); setView("workshop"); }}>
+            <Hammer size={14} />
+            关卡台
           </a>
           <a href="#chronicle">
             <BookOpen size={14} />
